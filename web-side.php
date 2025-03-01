@@ -6,7 +6,7 @@ include 'header.php';
 
 class Web_Tools_Functions
 {
-
+    
     function get_CurrDate()
     {
         $today = new DateTime("now", new DateTimeZone("Asia/Manila"));
@@ -51,6 +51,7 @@ class Web_Tools_Functions
                 $stmt = $pdo->prepare("INSERT INTO tbl_loggedin_attempts (attempted_email, attempted_tries, attempted_until) VALUES(?, 1, NULL)");
                 $stmt->execute([$emailData]);
             }
+            unset($stmt, $pdo); // *New*
             return json_encode(["response" => false, "message" => "Wrong Credentials"]);
             exit;
         }
@@ -59,6 +60,33 @@ class Web_Tools_Functions
         $stmt = $pdo->prepare("DELETE FROM tbl_loggedin_attempts WHERE attempted_email = ?");
         $stmt->execute([$emailData]);
         return json_encode(["response" => true, "message" => "User Successfully Logged In!"]);
+        unset($stmt, $pdo); // *New*
+    }
+
+    function sendOTP($data) {
+        include 'connection.php';
+        include 'Mail/mail_test.php';
+        $generatedOTP = mt_rand(100000, 999999);
+
+        $stmt = $pdo->prepare("SELECT * FROM tbl_customers WHERE customers_email = ?");
+        $stmt->execute($data["email"]);
+        $user_email = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        // Checks if the email exists
+        if ($user_email < 0) {
+            return json_encode(["response" => false, "message" => "Email does not exist"]);
+            exit;
+        }
+
+        $sendEmail = new Send_to_Email();
+        $email = $user_email["customers_email"];
+        $firstName = $user_email["customers_fname"];
+        $lastName = $user_email["customers_lname"];
+        $sendEmail->send_OTP($email, 
+                            "Reset Password  for Demiren Customer Account", 
+                            "Hello $lastName, $firstName. </br> Here is your One Time Password: $generatedOTP");
+
+        return json_encode(["response" => true, "otp_code" => $generatedOTP]);
     }
 
 
@@ -78,11 +106,11 @@ class Web_Tools_Functions
             exit();
         }
 
-        $hashedPassword = password_hash($data["password"], PASSWORD_DEFAULT);
+        $hashedPassword = $password_hash($data["password"], PASSWORD_DEFAULT);
 
         $sql = "INSERT INTO tbl_customers(customer_user_level_id, customers_fname, customers_lname, customers_country, 
         customers_email, customers_phone, customers_age, customers_password) 
-        VALUES (3 , :fname, :lname, :country, :email, :phone, :age, :code)";
+        VALUES (1, :fname, :lname, :country, :email, :phone, :age, :code)";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":fname", $data["fname"]);
         $stmt->bindParam(":lname", $data["lname"]);
@@ -252,6 +280,11 @@ switch ($methodType) {
         // Login
     case "submit-login":
         echo $web_tools->customer_login($jsonData);
+        break;
+
+    // Forgot Password
+    case "emailOTP":
+        echo $web_tools->sendOTP($jsonData);
         break;
 
         // Create Methods
