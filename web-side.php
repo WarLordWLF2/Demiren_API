@@ -65,17 +65,16 @@ class Web_Tools_Functions
 
     function sendOTP($data) {
         include 'connection.php';
-        include 'Mail/mail_test.php';
+        include 'mail_test.php';
         $generatedOTP = mt_rand(100000, 999999);
 
         $stmt = $pdo->prepare("SELECT * FROM tbl_customers WHERE customers_email = ?");
-        $stmt->execute($data["email"]);
+        $stmt->execute([$data["email"]]);
         $user_email = $stmt->fetch(PDO::FETCH_ASSOC);
 
         // Checks if the email exists
-        if ($user_email < 0) {
+        if (!$user_email) {
             return json_encode(["response" => false, "message" => "Email does not exist"]);
-            exit;
         }
 
         $sendEmail = new Send_to_Email();
@@ -106,7 +105,7 @@ class Web_Tools_Functions
             exit();
         }
 
-        $hashedPassword = $password_hash($data["password"], PASSWORD_DEFAULT);
+        $hashedPassword = password_hash($data["password"], PASSWORD_DEFAULT);
 
         $sql = "INSERT INTO tbl_customers(customer_user_level_id, customers_fname, customers_lname, customers_country, 
         customers_email, customers_phone, customers_age, customers_password) 
