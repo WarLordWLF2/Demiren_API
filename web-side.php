@@ -6,7 +6,7 @@ include 'header.php';
 
 class Web_Tools_Functions
 {
-    
+
     function get_CurrDate()
     {
         $today = new DateTime("now", new DateTimeZone("Asia/Manila"));
@@ -63,7 +63,9 @@ class Web_Tools_Functions
         unset($stmt, $pdo); // *New*
     }
 
-    function sendOTP($data) {
+    // Sends OTP to email
+    function sendOTP($data)
+    {
         include 'connection.php';
         include 'mail_test.php';
         $generatedOTP = mt_rand(100000, 999999);
@@ -75,19 +77,49 @@ class Web_Tools_Functions
         // Checks if the email exists
         if (!$user_email) {
             return json_encode(["response" => false, "message" => "Email does not exist"]);
+            exit;
         }
 
         $sendEmail = new Send_to_Email();
         $email = $user_email["customers_email"];
         $firstName = $user_email["customers_fname"];
         $lastName = $user_email["customers_lname"];
-        $sendEmail->send_OTP($email, 
-                            "Reset Password  for Demiren Customer Account", 
-                            "Hello $lastName, $firstName. </br> Here is your One Time Password: $generatedOTP");
+        $sendEmail->send_OTP(
+            $email,
+            "Reset Password  for Demiren Customer Account",
+            "Hello $lastName, $firstName. </br> Here is your One Time Password: $generatedOTP"
+        );
 
+        ob_clean();
         return json_encode(["response" => true, "otp_code" => $generatedOTP]);
     }
 
+    // Changes Forget Password
+    function iForgor($data)
+    {
+        include 'connection.php';
+
+        $stmt = $pdo->prepare("SELECT * FROM tbl_customers WHERE customers_email = ?");
+        $stmt->execute([$data["verifyEmail"]]);
+        $customer = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$customer) {
+            return json_encode(["response" => false, "message" => "Could not find anyone with the existing email"]);
+            exit;
+        }
+
+        $hashNewPassword = password_hash($data["newPass"], PASSWORD_DEFAULT);
+        $stmt = $pdo->prepare("UPDATE tbl_customers SET customers_password = :password WHERE customers_email = :email");
+        $stmt->bindParam(":password", $hashNewPassword);
+        $stmt->bindParam(":email", $customer["customers_email"]);
+        $stmt->execute();
+        $checkChanged = $stmt->rowCount() > 0;
+
+        if ($checkChanged) {
+            return json_encode(["response" => true, "message" => "Successfully Updated Password"]);
+        }
+        return json_encode(["response" => false, "message" => "Failed to Update Password"]);
+    }
 
     // Create New Account
     function new_account($data)
@@ -276,17 +308,22 @@ $methodType = isset($_POST["method"]) ? $_POST["method"] : 0;
 $jsonData = isset($_POST["json"]) ? json_decode($_POST["json"], true) : 0;
 
 switch ($methodType) {
-        // Login
+    // Login
     case "submit-login":
         echo $web_tools->customer_login($jsonData);
         break;
 
-    // Forgot Password
+    // Send OTP
     case "emailOTP":
         echo $web_tools->sendOTP($jsonData);
         break;
 
-        // Create Methods
+    // Forgot Passoword
+    case "forgotPass":
+        echo $web_tools->iForgor($jsonData);
+        break;
+
+    // Create Methods
     case "addUser":
         echo $web_tools->new_account($jsonData);
         break;
@@ -295,12 +332,12 @@ switch ($methodType) {
         echo $web_tools->addReservation_Request($jsonData);
         break;
 
-        // Read Methods
+    // Read Methods
     case "display-all-rooms":
         echo $web_tools->display_rooms();
         break;
 
-        // Update Methods
+    // Update Methods
     default:
         return json_encode(["response" => false, "message" => "Request Denied"]);
 }
