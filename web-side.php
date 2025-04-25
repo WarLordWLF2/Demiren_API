@@ -18,8 +18,8 @@ class Web_Tools_Functions
         include "connection.php";
         date_default_timezone_set('Asia/Manila'); // Ensure correct timezone
 
-        $emailData = $data["userMail"];
-        $emailPass = $data["userPass"];
+        $emailData = $data["email"];
+        $emailPass = $data["password"];
 
         // Checks user if Blocked
         $stmt = $pdo->prepare("SELECT attempted_tries, attempted_until FROM tbl_loggedin_attempts WHERE attempted_email = ?");
@@ -59,7 +59,7 @@ class Web_Tools_Functions
         // If Successful, reset failed attempts
         $stmt = $pdo->prepare("DELETE FROM tbl_loggedin_attempts WHERE attempted_email = ?");
         $stmt->execute([$emailData]);
-        return json_encode(["response" => true, "message" => "User Successfully Logged In!"]);
+        return json_encode(["response" => true, "message" => "User Successfully Logged In!", "userData" => $user]);
         unset($stmt, $pdo); // *New*
     }
 
@@ -143,8 +143,8 @@ class Web_Tools_Functions
         customers_email, customers_phone, customers_age, customers_password) 
         VALUES (1, :fname, :lname, :country, :email, :phone, :age, :code)";
         $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(":fname", $data["fname"]);
-        $stmt->bindParam(":lname", $data["lname"]);
+        $stmt->bindParam(":fname", $data["firstName"]);
+        $stmt->bindParam(":lname", $data["lastName"]);
         $stmt->bindParam(":country", $data["country"]);
         $stmt->bindParam(":email", $data["email"]);
         $stmt->bindParam(":phone", $data["phone"]);
@@ -175,21 +175,24 @@ class Web_Tools_Functions
     {
         include "connection.php";
 
-        $sql = "INSERT INTO tbl_reservation_online(reservation_online_customers_id, reservation_online_roomtype_id, 
-                                    reservation_online_timeanddate_id, reservation_online_num_of_customers, reservation_online_adult,
-                                    reservation_online_children ,reservation_online_total, reservation_online_downpayment, 
-                                    reservation_online_balance) 
-                VALUES(:cust_id, :roomtype_id, :timeanddate_id, :num_of_customers, :adult, :children, :total, :downpayment, :balance)";
+        $sql = "INSERT INTO  tbl_booking_online(booking_online_customers_id, booking_online_roomtype_id, booking_online_num_of_customers,
+                                    booking_online_adult, booking_online_children_age, booking_online_total, booking_online_downpayment,
+                                    booking_online_balance, timeanddate_time_arrival, timeanddate_date_arrival, timeanddate_created_at,
+                                    timeanddate_updated_at) 
+                VALUES(:customer, :roomType, :amnt_of_cust, :adult, :child_age, :total, :downpayment, :balance, :time_arrive, :date_arrive, 
+                        :createdAt, :updatedAt)";
         $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(":cust_id", $data["customer_id"]);
-        $stmt->bindParam(":roomtype_id", $data["lname"]);
-        $stmt->bindParam(":timeanddate_id", $data["country"]);
-        $stmt->bindParam(":num_of_customers", $data["email"]);
-        $stmt->bindParam(":adult", $data["phone"]);
-        $stmt->bindParam(":children", $data["age"]);
-        $stmt->bindParam(":total", $data["phone"]);
-        $stmt->bindParam(":downpayment", $data["age"]);
-        $stmt->bindParam(":balance", $data["age"]);
+        $stmt->bindParam(":customer", $data["customer_id"]);
+        $stmt->bindParam(":roomType", $data[""]);
+        $stmt->bindParam(":amnt_of_cust", $data[""]);
+        $stmt->bindParam(":num_of_customers", $data[""]);
+        $stmt->bindParam(":adult", $data[""]);
+        $stmt->bindParam(":child_age", $data[""]);
+        $stmt->bindParam(":total", $data[""]);
+        $stmt->bindParam(":downpayment", $data[""]);
+        $stmt->bindParam(":balance", $data[""]);
+        $stmt->bindParam(":time_arrive", $data[""]);
+        $stmt->bindParam(":date_arrive", $data[""]);
         $stmt->execute();
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $rowCount = $stmt->rowCount();

@@ -2,7 +2,7 @@
 $servername = "localhost";
 $dbusername = "root";
 $dbpassword = "";
-$dbname = "db_demiren";
+$dbname = "db_new_demiren";
 
 try {
     $pdo = new PDO("mysql:host=$servername;dbname=$dbname", $dbusername, $dbpassword);

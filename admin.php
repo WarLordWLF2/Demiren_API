@@ -106,19 +106,33 @@ class Admin_Functions
 
     // Rooms
     function view_rooms()
-    {
-        include "connection.php";
+{
+    include "connection.php";
 
-        $sql = "SELECT rooms.rooms_status, rooms.rooms_price_per_day, rooms.rooms_type_availability, roomType.roomtype_name FROM tbl_rooms rooms
-                INNER JOIN tbl_roomtype roomType ON rooms.roomtype_id = roomType.roomtype_id";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute();
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        $rowCount = $stmt->rowCount();
-        unset($stmt, $pdo);
+    $sql = "SELECT 
+        b.roomtype_id AS room_type, 
+        b.roomtype_name, 
+        GROUP_CONCAT(DISTINCT a.imagesroommaster_filename) AS images,
+        b.roomtype_price, 
+        GROUP_CONCAT(DISTINCT c.roomnumber_id) AS room_ids,
+        GROUP_CONCAT(DISTINCT CONCAT('Floor:', c.roomfloor, ' Beds:', c.room_beds)) AS room_details,
+        GROUP_CONCAT(DISTINCT e.room_amenities_master_name) AS amenities
+        FROM tbl_roomtype b
+        LEFT JOIN tbl_imagesroommaster a ON a.roomtype_id = b.roomtype_id
+        LEFT JOIN tbl_rooms c ON b.roomtype_id = c.roomtype_id
+        LEFT JOIN tbl_amenity_roomtype d ON b.roomtype_id = d.roomtype_id
+        LEFT JOIN tbl_room_amenities_master e ON d.room_amenities_master = e.room_amenities_master_id
+        GROUP BY b.roomtype_id, b.roomtype_name, b.roomtype_price";
 
-        return $rowCount > 0 ? json_encode($result) : 0;
-    }
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute();
+    $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $rowCount = $stmt->rowCount();
+    unset($stmt, $pdo);
+
+    return $rowCount > 0 ? json_encode($result) : 0;
+}
+
 
     // Beds
     function view_rooms_beds()
@@ -378,7 +392,7 @@ $jsonData = isset($_POST["json"]) ? json_decode($_POST["json"], true) : 0;
 
 
 switch ($methodType) {
-        // --------------------------------- For Viewing Data or Login --------------------------------- //
+    // --------------------------------- For Viewing Data or Login --------------------------------- //
     case "login-data":
         echo $admin_class->admin_login($jsonData);
         break;
@@ -424,7 +438,7 @@ switch ($methodType) {
         break;
 
 
-        // --------------------------------- For Adding Data --------------------------------- //
+    // --------------------------------- For Adding Data --------------------------------- //
     case "add":
         echo json_encode(["message" => "Successfully Added New Data", "data" => $jsonData]);
         break;
@@ -434,7 +448,7 @@ switch ($methodType) {
         break;
 
 
-        // --------------------------------- For Updating Data --------------------------------- //
+    // --------------------------------- For Updating Data --------------------------------- //
     case "update":
         echo json_encode(["message" => "Successfully Updated Data", "data" => $jsonData]);
         break;
@@ -444,7 +458,7 @@ switch ($methodType) {
         break;
 
 
-        // --------------------------------- For Deleting Data --------------------------------- //
+    // --------------------------------- For Deleting Data --------------------------------- //
     case "delete":
         echo json_encode(["message" => "Successfully Removed Data", "data" => $jsonData]);
         break;
