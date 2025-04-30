@@ -152,7 +152,7 @@ class Admin_Functions
         return $rowCount > 0 ? json_encode($result) : 0;
     }
 
-    function update_CurrACharges($data)
+    function update_CurrCharges($data)
     {
         include "connection.php";
 
@@ -419,7 +419,7 @@ switch ($methodType) {
 
     // --------------------------------- Master Files Manager --------------------------------- //
 
-    // -------- Amenities -------- //
+    // -------- -FM Amenities -------- //
     case "view_amenities":
         echo $AdminClass->view_Amenities();
         break;
@@ -435,4 +435,77 @@ switch ($methodType) {
     case "delete_amenities":
         echo $AdminClass->remove_Amenitiy($jsonData);
         break;
+
+
+    // -------- -FM Charges -------- //
+    case "view_charges":
+        echo $AdminClass->view_AllCharges();
+        break;
+
+    case "add_charges":
+        echo $AdminClass->add_NewCharges($jsonData);
+        break;
+
+    case "update_charges":
+        echo $AdminClass->update_CurrAmenities($jsonData);
+        break;
+
+    case "delete_charges":
+        echo $AdminClass->remove_Charges($jsonData);
+        break;
+
+    // -------- -FM Charge Categories -------- //
+    case "view_charge_category":
+        echo $AdminClass->view_AllChargeCategory();
+        break;
+
+    case "add_charge_category":
+        echo $AdminClass->add_NewChargeCategory($jsonData);
+        break;
+
+    case "update_charge_category":
+        echo $AdminClass->update_CurrChargeCategory($jsonData);
+        break;
+
+    case "delete_charge_category":
+        echo $AdminClass->remove_ChargeCategory($jsonData);
+        break;
+
+
+    // -------- -FM Discounts -------- //
+    case "view_discount":
+        echo $AdminClass->view_AllDiscounts();
+        break;
+
+    case "add_discount":
+        echo $AdminClass->add_NewDiscounts($jsonData);
+        break;
+
+    case "update_discount":
+        echo $AdminClass->update_CurrDiscounts($jsonData);
+        break;
+
+    case "delete_discount":
+        echo $AdminClass->remove_Discounts($jsonData);
+        break;
+
+        
+    // -------- -FM Room Types -------- //
+    case "view_room_types":
+        echo $AdminClass->view_AllRoomTypes();
+        break;
+
+    case "add_room_types":
+        echo $AdminClass->add_NewRoomTypes($jsonData);
+        break;
+
+    case "update_room_types":
+        echo $AdminClass->update_CurrRoomTypes($jsonData);
+        break;
+
+    case "delete_room_types":
+        echo $AdminClass->remove_RoomTypes($jsonData);
+        break;
+
+
 }
