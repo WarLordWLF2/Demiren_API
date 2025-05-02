@@ -2,7 +2,6 @@
 
 include 'header.php';
 
-
 class Admin_Functions
 {
 
@@ -73,35 +72,30 @@ class Admin_Functions
 
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":amenityName", $data["amenity_name"]);
+        $stmt->execute();
 
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $rowCount = $stmt->rowCount();
         unset($stmt, $pdo);
 
-
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        $rowCount = $stmt->rowCount();
-        unset($stmt, $pdo);
-
-        return $rowCount > 0 ? json_encode($result) : 0;
+        return $rowCount > 0 ? 1 : 0;
     }
 
     function update_CurrAmenities($data)
     {
         include "connection.php";
 
-        $sql = "UPDATE tbl_room_amenities_master SET 'room_amenities_master_name' = :amenityName 
-        WHERE room_amenities_master_id = :amenityID";
-
+        $sql = "UPDATE tbl_room_amenities_master SET room_amenities_master_name=:amenityName 
+        WHERE room_amenities_master_id=:amenityID";
         $stmt = $pdo->prepare($sql);
+
         $stmt->bindParam(":amenityID", $data["amenity_id"]);
         $stmt->bindParam(":amenityName", $data["amenity_name"]);
+        $stmt->execute();
 
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $rowCount = $stmt->rowCount();
         unset($stmt, $pdo);
 
-        return $rowCount > 0 ? json_encode($result) : 0;
+        return $rowCount > 0 ? 1 : 0;
     }
 
     function remove_Amenitiy($data)
@@ -110,11 +104,10 @@ class Admin_Functions
 
         $sql = "SELECT * FROM tbl_room_amenities_master ";
 
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $rowCount = $stmt->rowCount();
         unset($stmt, $pdo);
 
-        return $rowCount > 0 ? json_encode($result) : 0;
+        return $rowCount > 0 ? 1 : 0;
     }
 
     // ----- Charges Master ----- //
@@ -144,12 +137,12 @@ class Admin_Functions
         $stmt->bindParam(":categoryID", $data["charge_category"]);
         $stmt->bindParam(":chargeName", $data["charge_name"]);
         $stmt->bindParam(":chargePrice", $data["charge_price"]);
+        $stmt->execute();
 
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $rowCount = $stmt->rowCount();
         unset($stmt, $pdo);
 
-        return $rowCount > 0 ? json_encode($result) : 0;
+        return $rowCount > 0 ? 1 : 0;
     }
 
     function update_CurrCharges($data)
@@ -164,12 +157,12 @@ class Admin_Functions
         $stmt->bindParam(":categoryID", $data["charge_category"]);
         $stmt->bindParam(":chargeName", $data["charge_name"]);
         $stmt->bindParam(":chargePrice", $data["charge_price"]);
+        $stmt->execute();
 
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $rowCount = $stmt->rowCount();
         unset($stmt, $pdo);
 
-        return $rowCount > 0 ? json_encode($result) : 0;
+        return $rowCount > 0 ? 1 : 0;
     }
 
     function remove_Charges($data)
@@ -178,11 +171,10 @@ class Admin_Functions
 
         $sql = "SELECT * FROM tbl_room_amenities_master ";
 
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $rowCount = $stmt->rowCount();
         unset($stmt, $pdo);
 
-        return $rowCount > 0 ? json_encode($result) : 0;
+        return $rowCount > 0 ? 1 : 0;
     }
 
     // ----- Charges Category Master ----- //
@@ -210,12 +202,12 @@ class Admin_Functions
 
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":chargeCategoryName", $data["charge_category_name"]);
+        $stmt->execute();
 
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $rowCount = $stmt->rowCount();
         unset($stmt, $pdo);
 
-        return $rowCount > 0 ? json_encode($result) : 0;
+        return $rowCount > 0 ? 1 : 0;
     }
 
     function update_CurrChargeCategory($data)
@@ -228,12 +220,12 @@ class Admin_Functions
 
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":chargeCategoryName", $data["charge_category_name"]);
+        $stmt->execute();
 
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $rowCount = $stmt->rowCount();
         unset($stmt, $pdo);
 
-        return $rowCount > 0 ? json_encode($result) : 0;
+        return $rowCount > 0 ? 1 : 0;
     }
 
     function remove_ChargeCategory($data)
@@ -242,11 +234,10 @@ class Admin_Functions
 
         $sql = "SELECT * FROM tbl_room_amenities_master ";
 
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $rowCount = $stmt->rowCount();
         unset($stmt, $pdo);
 
-        return $rowCount > 0 ? json_encode($result) : 0;
+        return $rowCount > 0 ? 1 : 0;
     }
 
     // ----- Discount Master ----- //
@@ -277,12 +268,12 @@ class Admin_Functions
         $stmt->bindParam(":discountDateStart", $data["discount_date_start"]);
         $stmt->bindParam(":discountDateEnd", $data["discount_date_end"]);
         $stmt->bindParam(":discountPercent", $data["discount_percent"]);
+        $stmt->execute();
 
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $rowCount = $stmt->rowCount();
         unset($stmt, $pdo);
 
-        return $rowCount > 0 ? json_encode($result) : 0;
+        return $rowCount > 0 ? 1 : 0;
     }
 
     function update_CurrDiscounts($data)
@@ -300,12 +291,12 @@ class Admin_Functions
         $stmt->bindParam(":discountDateStart", $data["discount_date_start"]);
         $stmt->bindParam(":discountDateEnd", $data["discount_date_end"]);
         $stmt->bindParam(":discountPercent", $data["discount_percent"]);
+        $stmt->execute();
 
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $rowCount = $stmt->rowCount();
         unset($stmt, $pdo);
 
-        return $rowCount > 0 ? json_encode($result) : 0;
+        return $rowCount > 0 ? 1 : 0;
     }
 
     function remove_Discounts($data)
@@ -314,11 +305,10 @@ class Admin_Functions
 
         $sql = "SELECT * FROM tbl_room_amenities_master ";
 
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $rowCount = $stmt->rowCount();
         unset($stmt, $pdo);
 
-        return $rowCount > 0 ? json_encode($result) : 0;
+        return $rowCount > 0 ? 1 : 0;
     }
 
     // ----- Room Type Master ----- //
@@ -349,12 +339,12 @@ class Admin_Functions
         $stmt->bindParam(":discountDateStart", $data["discount_date_start"]);
         $stmt->bindParam(":discountDateEnd", $data["discount_date_end"]);
         $stmt->bindParam(":discountPercent", $data["discount_percent"]);
+        $stmt->execute();
 
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $rowCount = $stmt->rowCount();
         unset($stmt, $pdo);
 
-        return $rowCount > 0 ? json_encode($result) : 0;
+        return $rowCount > 0 ? 1 : 0;
     }
 
     function update_CurrRoomTypes($data)
@@ -372,12 +362,12 @@ class Admin_Functions
         $stmt->bindParam(":discountDateStart", $data["discount_date_start"]);
         $stmt->bindParam(":discountDateEnd", $data["discount_date_end"]);
         $stmt->bindParam(":discountPercent", $data["discount_percent"]);
+        $stmt->execute();
 
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $rowCount = $stmt->rowCount();
         unset($stmt, $pdo);
 
-        return $rowCount > 0 ? json_encode($result) : 0;
+        return $rowCount > 0 ? 1 : 0;
     }
 
     function remove_RoomTypes($data)
@@ -386,11 +376,10 @@ class Admin_Functions
 
         $sql = "SELECT * FROM  tbl_roomtype";
 
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $rowCount = $stmt->rowCount();
         unset($stmt, $pdo);
 
-        return $rowCount > 0 ? json_encode($result) : 0;
+        return $rowCount > 0 ? 1 : 0;
     }
 }
 
