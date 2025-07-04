@@ -9,80 +9,152 @@ include 'header.php';
 // 3. Can update a booking
 // 4. Can view all booking
 
-class Booking_Functions
+class FrontDesk_Functions
 {
     // Views the Rooms that are currently Booked and it's details
     function view_booking()
     {
         include 'connection.php';
 
-        $sql = "SELECT a.reservation_status_id, CONCAT(c.guests_user_fname, ' ', c.guests_user_lname) AS guest_name, b.reservation_online_num_of_guest, 
-                b.reservation_online_adult, b.reservation_online_children, b.reservation_online_roomtype_id FROM tbl_reservation_status a 
-                INNER JOIN tbl_reservation_online b ON a.reservation_online_id = b.reservation_online_id
-                INNER JOIN tbl_guests c ON b.reservation_online_guest_id = c.guests_id";
+        $sql = "SELECT 
+                a.booking_id, 
+                b.customers_online_username AS username, 
+                CONCAT(c.customers_walk_in_fname, ' ', c.customers_walk_in_lname) AS walk_in, 
+                GROUP_CONCAT(DISTINCT f.roomtype_id) AS roomtype_ids,
+                GROUP_CONCAT(DISTINCT f.roomtype_name) AS roomtype_names,
+                GROUP_CONCAT(DISTINCT e.roomnumber_id) AS roomnumber_ids,
+                a.booking_status_id, 
+                d.booking_status_name, 
+                a.booking_downpayment, 
+                a.booking_checkin_dateandtime AS check_in, 
+                a.booking_checkout_dateandtime AS check_out, 
+                a.booking_created_at AS booking_req, 
+                a.booking_reference_number AS ref_num
 
-        $stmt = $pdo->prepare($sql);
+                FROM tbl_booking a
+                LEFT JOIN tbl_customers_online b ON a.customers_id = b.customers_online_id
+                LEFT JOIN tbl_customers_walk_in c ON a.customers_walk_in_id = c.customers_walk_in_id
+                INNER JOIN tbl_booking_status d ON a.booking_status_id = d.booking_status_id
+                INNER JOIN tbl_booking_room e ON e.booking_id = a.booking_id
+                INNER JOIN tbl_roomtype f ON e.roomtype_id = f.roomtype_id
+
+                GROUP BY a.booking_id";
+
+        $stmt = $conn->prepare($sql);
         $stmt->execute();
-        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        unset($pdo, $stmt);
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rowCount = $stmt->rowCount();
+        unset($stmt, $conn);
 
-        if ($results) {
-            return json_encode(["response" => true, "data" => $results, "message" => "Fetched All Available Bookings"]);
-        } else {
-            return json_encode(["response" => false, "message" => "Could not find anything..."]);
+        return $rowCount > 0 ? json_encode($result) : 0;
+    }
+
+    function add_WalkIn_booking($data)
+    {
+        include 'connection.php';
+
+        try {
+            $conn->beginTransaction();
+
+            $sql = "";
+            $stmt = $conn->prepare($sql);
+            $stmt->bindParam(":", $data);
+
+            $stmt = $conn->prepare($sql);
+            $stmt->execute();
+            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if ($results) {
+                json_encode(["response" => true, "message" => "Successfully Added New Schedule"]);
+            }
+        } catch (PDOException $e) {
         }
     }
 
-    // Customer Gets Room from Front Desk
-    function add_booking($data)
+    function update_bookingStatus($data)
     {
+        // Has to change "Pending" to "Approved"
+        // Room that the user has chosen has to be "Occupied"
         include 'connection.php';
-        $decodeData = json_decode($data, true);
 
-        $sql = "INSERT INTO timeanddate( guest_name, time_arrival, date_arrival, num_of_guest, 
-                adult, children, roomtype_id, created_at, updated_at) 
-                VALUES (:name, :time_arrival, :date_arrival, :num_of_guest, :adult, :children, :roomtype_id, 
-                :created_at, :updated_at)";
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(":name", $decodeData["name"]);
-        $stmt->bindParam(":time_arrival", $decodeData["time_arrival"]);
-        $stmt->bindParam(":date_arrival", $decodeData["date_arrival"]);
-        $stmt->bindParam(":num_of_guest", $decodeData["num_of_guest"]);
-        $stmt->bindParam(":adult", $decodeData["adult"]);
-        $stmt->bindParam(":children", $decodeData["children"]);
-        $stmt->bindParam(":roomtype_id", $decodeData["roomtype_id"]);
+        try {
+            $booking_id = intval($data["booking_id"]);
+            $status_id = intval($data["booking_status_id"]);
 
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute();
-        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        if ($results) {
-            json_encode(["response" => true, "message" => "Successfully Added New Schedule"]);
+            $sql = "UPDATE tbl_booking SET booking_status_id = :status_id WHERE booking_id = :bookingID";
+
+            $stmt = $conn->prepare($sql);
+            $stmt->bindParam(":status_id", $status_id);
+            $stmt->bindParam(":bookingID", $booking_id);
+            $success = $stmt->execute();
+
+            echo json_encode(["success" => $success]);
+        } catch (PDOException $e) {
+            echo json_encode(["success" => false, "error" => $e->getMessage()]);
         }
+
+        unset($stmt, $conn);
     }
 
     // Add Guests
-    function newGuests($data)
+    function customerWalkIn($json)
     {
-        include 'connection.php';
-        $decodeData = json_decode($data, true);
+        include "connection.php";
+        $json = json_decode($json, true);
 
-        $sql = "INSERT INTO tbl_guests(guests_user_fname, guests_user_lname, guests_user_country, guests_user_email,
-                guests_user_phone, guests_user_age)
-                VALUES(:fname, :lname, :country, :email, :phone, :age)";
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(":fname", $decodeData[""]);
-        $stmt->bindParam(":lname", $decodeData[""]);
-        $stmt->bindParam(":country", $decodeData[""]);
-        $stmt->bindParam(":email", $decodeData[""]);
-        $stmt->bindParam(":phone", $decodeData[""]);
-        $stmt->bindParam(":age", $decodeData[""]);
-        $stmt->execute();
+        try {
+            $conn->beginTransaction();
 
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        unset($stmt, $pdo);
-        if ($result) {
-            json_encode(["response" => true, "message" => "Successfully Added Guest"]);
+            // Insert walk-in customer
+            $stmt = $conn->prepare("
+                INSERT INTO tbl_customers_walk_in 
+                    (customers_walk_in_fname, customers_walk_in_lname, customers_walk_in_email, customers_walk_in_phone_number) 
+                VALUES 
+                    (:customers_walk_in_fname, :customers_walk_in_lname, :customers_walk_in_email, :customers_walk_in_phone_number)
+            ");
+            $stmt->bindParam(":customers_walk_in_fname", $json["customers_walk_in_fname"]);
+            $stmt->bindParam(":customers_walk_in_lname", $json["customers_walk_in_lname"]);
+            $stmt->bindParam(":customers_walk_in_email", $json["customers_walk_in_email"]);
+            $stmt->bindParam(":customers_walk_in_phone_number", $json["customers_walk_in_phone_number"]);
+            $stmt->execute();
+            $walkInCustomerId = $conn->lastInsertId();
+
+            // Insert booking
+            $stmt = $conn->prepare("
+                INSERT INTO tbl_booking 
+                    (customers_id, customers_walk_in_id, booking_status_id, booking_downpayment, booking_checkin_dateandtime, booking_checkout_dateandtime, booking_created_at) 
+                VALUES 
+                    (NULL, :customers_walk_in_id, 2, :booking_downpayment, :booking_checkin_dateandtime, :booking_checkout_dateandtime, NOW())
+            ");
+            $stmt->bindParam(":customers_walk_in_id", $walkInCustomerId);
+            $stmt->bindParam(":booking_downpayment", $json["booking_downpayment"]);
+            $stmt->bindParam(":booking_checkin_dateandtime", $json["booking_checkin_dateandtime"]);
+            $stmt->bindParam(":booking_checkout_dateandtime", $json["booking_checkout_dateandtime"]);
+            $stmt->execute();
+            $bookingId = $conn->lastInsertId();
+
+            // Insert into tbl_booking_room based on room quantity
+            $roomtype_id = $json["roomtype_id"];
+            $room_count = intval($json["room_count"]);
+
+            for ($i = 0; $i < $room_count; $i++) {
+                $stmt = $conn->prepare("
+                    INSERT INTO tbl_booking_room 
+                        (booking_id, roomtype_id, roomnumber_id) 
+                    VALUES 
+                        (:booking_id, :roomtype_id, NULL)
+                ");
+                $stmt->bindParam(":booking_id", $bookingId);
+                $stmt->bindParam(":roomtype_id", $roomtype_id);
+                $stmt->execute();
+            }
+
+            $conn->commit();
+            return 1;
+        } catch (PDOException $e) {
+            $conn->rollBack();
+            return 0;
         }
     }
 
@@ -95,7 +167,7 @@ class Booking_Functions
         $sql = "INSERT INTO tbl_guests(visitorlogs_guest_id, visitorlogs_visitorname , visitorlogs_purpose , visitorlogs_checkin_time,
                 visitorlogs_checkout_time)
                 VALUES(:guest, :visitor_name, :purpose, :check_in, :check_out)";
-        $stmt = $pdo->prepare($sql);
+        $stmt = $conn->prepare($sql);
         $stmt->bindParam(":guest", $decodeData[""]);
         $stmt->bindParam(":visitor_name", $decodeData[""]);
         $stmt->bindParam(":purpose", $decodeData[""]);
@@ -104,7 +176,7 @@ class Booking_Functions
         $stmt->execute();
 
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        unset($stmt, $pdo);
+        unset($stmt, $conn);
         if ($result) {
             json_encode(["response" => true, "message" => "Successfully Added New Log"]);
         }
@@ -119,7 +191,7 @@ class Booking_Functions
         $sql = "UPDATE tbl_guests 
                 SET visitorlogs_guest_id = :guest, visitorlogs_visitorname = :visitor_name, visitorlogs_purpose = :purpose, 
                 visitorlogs_checkin_time = :check_in, visitorlogs_checkout_time = :check_out)";
-        $stmt = $pdo->prepare($sql);
+        $stmt = $conn->prepare($sql);
         $stmt->bindParam(":guest", $decodeData[""]);
         $stmt->bindParam(":visitor_name", $decodeData[""]);
         $stmt->bindParam(":purpose", $decodeData[""]);
@@ -128,7 +200,7 @@ class Booking_Functions
         $stmt->execute();
 
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        unset($stmt, $pdo);
+        unset($stmt, $conn);
         if ($result) {
             json_encode(["response" => true, "message" => "Successfully Updated Log"]);
         }
@@ -136,48 +208,29 @@ class Booking_Functions
 }
 
 
-$booking = new Booking_Functions();
-if ($_SERVER["REQUEST_METHOD"] == "GET") {
-    
-    $svr_Request = $_GET["methodType"];
-    switch ($svr_Request) {
-        case "view-booking":
-            echo $booking->view_booking();
-            break;
+$demiren_FrontDesk = new FrontDesk_Functions();
+$method = isset($_POST["method"]) ? $_POST["method"] : 0;
+$json = isset($_POST["json"]) ? json_decode($_POST["json"], true) : 0;
 
-        default:
-            echo json_encode(["response" => false, "message" => "Not Available"]);
-    }
-    
-} else if ($_SERVER["REQUEST_METHOD"] == "POST") {
+switch ($method) {
+    case 'view-reservations':
+        echo $demiren_FrontDesk->view_booking();
+        break;
+    case 'update-booking-status':
+        echo $demiren_FrontDesk->update_bookingStatus($json);
+        break;
 
-    $svr_Request = $_POST["methodType"];
-    switch ($svr_Request) {
-        case "add-booking":
-            $book_data = $_POST[""];
-            echo $booking->add_booking($book_data);
-            break;
+    // Guests
+    case 'customer-walkIn':
+        echo $demiren_FrontDesk->customerWalkIn($json);
+        break;
 
-        case "addGuest":
-            $data = $_POST["guest_data"];
-            echo $website->newGuests($data);
-            break;
-
-        default:
-            echo json_encode(["response" => false, "message" => "Not Available"]);
-    }
-
-} else if ($_SERVER["REQUEST_METHOD"] == "PUT") {
-
-    $svr_Request = $_PUT["methodType"];
-    switch ($svr_Request) {
-        case "upd_Log":
-            $book_data = $_PUT["log_data"];
-            echo $booking->change_visitor_logs($book_data);
-            break;
-
-        default:
-    }
-} else {
-    echo json_encode(["response" => false, "message" => "Request Method not Available..."]);
+    // Room Availablity
+    case 'available-rooms':
+        break;
+    case 'edit-room':
+        break;
+    default:
+        echo "Method Unavailable...";
+        break;
 }

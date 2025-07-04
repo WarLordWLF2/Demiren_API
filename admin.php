@@ -1,6 +1,6 @@
 <?php
 
-include 'header.php';
+include 'headers.php';
 
 class Admin_Functions
 {
@@ -12,7 +12,7 @@ class Admin_Functions
         include "connection.php";
 
         $sql = "";
-        $stmt = $pdo->prepare($sql);
+        $stmt = $conn->prepare($sql);
         $stmt->bindParam(":email", $data[""]);
         $stmt->bindParam(":password", $data[""]);
     }
@@ -37,11 +37,11 @@ class Admin_Functions
         LEFT JOIN tbl_room_amenities_master e ON d.room_amenities_master = e.room_amenities_master_id
         GROUP BY b.roomtype_id, b.roomtype_name, b.roomtype_price";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $conn->prepare($sql);
         $stmt->execute();
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $rowCount = $stmt->rowCount();
-        unset($stmt, $pdo);
+        unset($stmt, $conn);
 
         return $rowCount > 0 ? json_encode($result) : 0;
     }
@@ -52,13 +52,13 @@ class Admin_Functions
     {
         include "connection.php";
 
-        $sql = "SELECT * FROM tbl_room_amenities_master ";
+        $sql = "SELECT * FROM tbl_room_amenities_master";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $conn->prepare($sql);
         $stmt->execute();
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $rowCount = $stmt->rowCount();
-        unset($stmt, $pdo);
+        unset($stmt, $conn);
 
         return $rowCount > 0 ? json_encode($result) : 0;
     }
@@ -70,12 +70,12 @@ class Admin_Functions
         $sql = "INSERT INTO tbl_room_amenities_master (room_amenities_master_name)
         VALUES (:amenityName)";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $conn->prepare($sql);
         $stmt->bindParam(":amenityName", $data["amenity_name"]);
         $stmt->execute();
 
         $rowCount = $stmt->rowCount();
-        unset($stmt, $pdo);
+        unset($stmt, $conn);
 
         return $rowCount > 0 ? 1 : 0;
     }
@@ -86,14 +86,14 @@ class Admin_Functions
 
         $sql = "UPDATE tbl_room_amenities_master SET room_amenities_master_name=:amenityName 
         WHERE room_amenities_master_id=:amenityID";
-        $stmt = $pdo->prepare($sql);
+        $stmt = $conn->prepare($sql);
 
         $stmt->bindParam(":amenityID", $data["amenity_id"]);
         $stmt->bindParam(":amenityName", $data["amenity_name"]);
         $stmt->execute();
 
         $rowCount = $stmt->rowCount();
-        unset($stmt, $pdo);
+        unset($stmt, $conn);
 
         return $rowCount > 0 ? 1 : 0;
     }
@@ -105,7 +105,7 @@ class Admin_Functions
         $sql = "SELECT * FROM tbl_room_amenities_master ";
 
         $rowCount = $stmt->rowCount();
-        unset($stmt, $pdo);
+        unset($stmt, $conn);
 
         return $rowCount > 0 ? 1 : 0;
     }
@@ -115,15 +115,13 @@ class Admin_Functions
     {
         include "connection.php";
 
-        $sql = "SELECT a.charges_master_id, a.charges_master_name, a.charges_master_price, b.charges_category_id, b.charges_category_name 
-                FROM tbl_charges_master a
-                INNER JOIN tbl_charges_category b ON a.charges_category_id = b.charges_category_id";
+        $sql = "SELECT * FROM tbl_charges_master";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $conn->prepare($sql);
         $stmt->execute();
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $rowCount = $stmt->rowCount();
-        unset($stmt, $pdo);
+        unset($stmt, $conn);
 
         return $rowCount > 0 ? json_encode($result) : 0;
     }
@@ -133,16 +131,16 @@ class Admin_Functions
         include "connection.php";
 
         $sql = "INSERT INTO tbl_charges_master (charges_category_id, charges_master_name, charges_master_price)
-        VALUES (:chargeCategory, :chargeName, :chargePrice)";
+        VALUES (:categoryID, :chargeName, :chargePrice)";
 
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(":chargeCategory", $data["chargeCatID"]);
-        $stmt->bindParam(":chargeName", $data["chargeName"]);
-        $stmt->bindParam(":chargePrice", $data["chargePrice"]);
+        $stmt = $conn->prepare($sql);
+        $stmt->bindParam(":categoryID", $data["charge_category"]);
+        $stmt->bindParam(":chargeName", $data["charge_name"]);
+        $stmt->bindParam(":chargePrice", $data["charge_price"]);
         $stmt->execute();
 
         $rowCount = $stmt->rowCount();
-        unset($stmt, $pdo);
+        unset($stmt, $conn);
 
         return $rowCount > 0 ? 1 : 0;
     }
@@ -152,18 +150,17 @@ class Admin_Functions
         include "connection.php";
 
         $sql = "UPDATE tbl_charges_master 
-        SET charges_category_id = :categoryID, charges_master_name = :chargeName, charges_master_price = :chargePrice
-        WHERE charges_master_id = :chargeMasterID";
+        SET 'charges_category_id' = :categoryID, 'charges_master_name' = :chargeName, 'charges_master_price' = :chargePrice
+        WHERE room_amenities_master_id = :amenityID";
 
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(":chargeMasterID", $data["chargeID"]);
-        $stmt->bindParam(":chargeName", $data["chargeName"]);
-        $stmt->bindParam(":chargePrice", $data["chargePrice"]);
-        $stmt->bindParam(":categoryID", $data["chargeCatID"]);
+        $stmt = $conn->prepare($sql);
+        $stmt->bindParam(":categoryID", $data["charge_category"]);
+        $stmt->bindParam(":chargeName", $data["charge_name"]);
+        $stmt->bindParam(":chargePrice", $data["charge_price"]);
         $stmt->execute();
 
         $rowCount = $stmt->rowCount();
-        unset($stmt, $pdo);
+        unset($stmt, $conn);
 
         return $rowCount > 0 ? 1 : 0;
     }
@@ -175,7 +172,7 @@ class Admin_Functions
         $sql = "SELECT * FROM tbl_room_amenities_master ";
 
         $rowCount = $stmt->rowCount();
-        unset($stmt, $pdo);
+        unset($stmt, $conn);
 
         return $rowCount > 0 ? 1 : 0;
     }
@@ -187,11 +184,11 @@ class Admin_Functions
 
         $sql = "SELECT * FROM tbl_charges_category";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $conn->prepare($sql);
         $stmt->execute();
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $rowCount = $stmt->rowCount();
-        unset($stmt, $pdo);
+        unset($stmt, $conn);
 
         return $rowCount > 0 ? json_encode($result) : 0;
     }
@@ -203,12 +200,12 @@ class Admin_Functions
         $sql = "INSERT INTO tbl_charges_category (charges_category_name)
         VALUES (:chargeCategoryName)";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $conn->prepare($sql);
         $stmt->bindParam(":chargeCategoryName", $data["charge_category_name"]);
         $stmt->execute();
 
         $rowCount = $stmt->rowCount();
-        unset($stmt, $pdo);
+        unset($stmt, $conn);
 
         return $rowCount > 0 ? 1 : 0;
     }
@@ -217,17 +214,16 @@ class Admin_Functions
     {
         include "connection.php";
 
-        $sql = "UPDATE tbl_charges_category  
-        SET charges_category_name = :chargeCategoryName
+        $sql = "UPDATE tbl_charges_category 
+        SET 'charges_category_name' = :chargeCategoryName
         WHERE charges_category_id = :chargeCategoryID";
 
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(":chargeCategoryID", $data["charge_category_id"]);
+        $stmt = $conn->prepare($sql);
         $stmt->bindParam(":chargeCategoryName", $data["charge_category_name"]);
         $stmt->execute();
 
         $rowCount = $stmt->rowCount();
-        unset($stmt, $pdo);
+        unset($stmt, $conn);
 
         return $rowCount > 0 ? 1 : 0;
     }
@@ -239,7 +235,7 @@ class Admin_Functions
         $sql = "SELECT * FROM tbl_room_amenities_master ";
 
         $rowCount = $stmt->rowCount();
-        unset($stmt, $pdo);
+        unset($stmt, $conn);
 
         return $rowCount > 0 ? 1 : 0;
     }
@@ -251,11 +247,11 @@ class Admin_Functions
 
         $sql = "SELECT * FROM tbl_discounts";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $conn->prepare($sql);
         $stmt->execute();
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $rowCount = $stmt->rowCount();
-        unset($stmt, $pdo);
+        unset($stmt, $conn);
 
         return $rowCount > 0 ? json_encode($result) : 0;
     }
@@ -267,15 +263,15 @@ class Admin_Functions
         $sql = "INSERT INTO tbl_discounts (discounts_type, discounts_datestart, discounts_dateend, discounts_percent)
         VALUES (:discountType, :discountDateStart, :discountDateEnd, :discountPercent)";
 
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(":discountType", $data["discountType"]);
-        $stmt->bindParam(":discountDateStart", $data["startDate"]);
-        $stmt->bindParam(":discountDateEnd", $data["endDate"]);
-        $stmt->bindParam(":discountPercent", $data["discountPercent"]);
+        $stmt = $conn->prepare($sql);
+        $stmt->bindParam(":discountType", $data["discount_type"]);
+        $stmt->bindParam(":discountDateStart", $data["discount_date_start"]);
+        $stmt->bindParam(":discountDateEnd", $data["discount_date_end"]);
+        $stmt->bindParam(":discountPercent", $data["discount_percent"]);
         $stmt->execute();
 
         $rowCount = $stmt->rowCount();
-        unset($stmt, $pdo);
+        unset($stmt, $conn);
 
         return $rowCount > 0 ? 1 : 0;
     }
@@ -285,20 +281,20 @@ class Admin_Functions
         include "connection.php";
 
         $sql = "UPDATE tbl_discounts 
-        SET discounts_type = :discountType, discounts_datestart = :discountDateStart, 
-            discounts_dateend = :discountDateEnd, discounts_percent = :discountPercent
+        SET 'discounts_type' = :discountType, 'discounts_datestart' = :discountDateStart, 
+            'discounts_dateend' = :discountDateEnd, 'discounts_percent' = :discountPercent
         WHERE discounts_id = :discountID";
 
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(":discountID", $data["discounts_id"]);
+        $stmt = $conn->prepare($sql);
+        $stmt->bindParam(":discountID", $data["discount_id"]);
         $stmt->bindParam(":discountType", $data["discount_type"]);
-        $stmt->bindParam(":discountDateStart", $data["discount_startDate"]);
-        $stmt->bindParam(":discountDateEnd", $data["discount_endDate"]);
+        $stmt->bindParam(":discountDateStart", $data["discount_date_start"]);
+        $stmt->bindParam(":discountDateEnd", $data["discount_date_end"]);
         $stmt->bindParam(":discountPercent", $data["discount_percent"]);
         $stmt->execute();
 
         $rowCount = $stmt->rowCount();
-        unset($stmt, $pdo);
+        unset($stmt, $conn);
 
         return $rowCount > 0 ? 1 : 0;
     }
@@ -310,7 +306,7 @@ class Admin_Functions
         $sql = "SELECT * FROM tbl_room_amenities_master ";
 
         $rowCount = $stmt->rowCount();
-        unset($stmt, $pdo);
+        unset($stmt, $conn);
 
         return $rowCount > 0 ? 1 : 0;
     }
@@ -322,11 +318,11 @@ class Admin_Functions
 
         $sql = "SELECT * FROM tbl_roomtype";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $conn->prepare($sql);
         $stmt->execute();
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $rowCount = $stmt->rowCount();
-        unset($stmt, $pdo);
+        unset($stmt, $conn);
 
         return $rowCount > 0 ? json_encode($result) : 0;
     }
@@ -336,16 +332,17 @@ class Admin_Functions
         include "connection.php";
 
         $sql = "INSERT INTO tbl_roomtype (roomtype_name, roomtype_description, roomtype_price)
-        VALUES (:room_name, :room_description, :room_price)";
+        VALUES (:roomTypeName, :discountDateStart, :discountDateEnd, :discountPercent)";
 
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(":room_name", $data["room_name"]);
-        $stmt->bindParam(":room_description", $data["room_desc"]);
-        $stmt->bindParam(":room_price", $data["room_price"]);
+        $stmt = $conn->prepare($sql);
+        $stmt->bindParam(":discountType", $data["discount_type"]);
+        $stmt->bindParam(":discountDateStart", $data["discount_date_start"]);
+        $stmt->bindParam(":discountDateEnd", $data["discount_date_end"]);
+        $stmt->bindParam(":discountPercent", $data["discount_percent"]);
         $stmt->execute();
 
         $rowCount = $stmt->rowCount();
-        unset($stmt, $pdo);
+        unset($stmt, $conn);
 
         return $rowCount > 0 ? 1 : 0;
     }
@@ -354,19 +351,21 @@ class Admin_Functions
     {
         include "connection.php";
 
-        $sql = "UPDATE tbl_roomtype 
-        SET roomtype_name = :roomTypeName, roomtype_description = :roomTypeDesc, roomtype_price = :roomTypePrice
-        WHERE roomtype_id = :roomTypeID";
+        $sql = "UPDATE  tbl_roomtype 
+        SET 'discounts_type' = :discountType, 'discounts_datestart' = :discountDateStart, 
+            'discounts_dateend' = :discountDateEnd, 'discounts_percent' = :discountPercent
+        WHERE discounts_id = :discountID";
 
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(":roomTypeID", $data["roomtype_id"]);
-        $stmt->bindParam(":roomTypeName", $data["roomtype_name"]);
-        $stmt->bindParam(":roomTypeDesc", $data["roomtype_description"]);
-        $stmt->bindParam(":roomTypePrice", $data["roomtype_price"]);
+        $stmt = $conn->prepare($sql);
+        $stmt->bindParam(":discountID", $data["discount_id"]);
+        $stmt->bindParam(":discountType", $data["discount_type"]);
+        $stmt->bindParam(":discountDateStart", $data["discount_date_start"]);
+        $stmt->bindParam(":discountDateEnd", $data["discount_date_end"]);
+        $stmt->bindParam(":discountPercent", $data["discount_percent"]);
         $stmt->execute();
 
         $rowCount = $stmt->rowCount();
-        unset($stmt, $pdo);
+        unset($stmt, $conn);
 
         return $rowCount > 0 ? 1 : 0;
     }
@@ -378,7 +377,7 @@ class Admin_Functions
         $sql = "SELECT * FROM  tbl_roomtype";
 
         $rowCount = $stmt->rowCount();
-        unset($stmt, $pdo);
+        unset($stmt, $conn);
 
         return $rowCount > 0 ? 1 : 0;
     }
@@ -437,7 +436,7 @@ switch ($methodType) {
         break;
 
     case "update_charges":
-        echo $AdminClass->update_CurrCharges($jsonData);
+        echo $AdminClass->update_CurrAmenities($jsonData);
         break;
 
     case "delete_charges":
@@ -479,7 +478,7 @@ switch ($methodType) {
         echo $AdminClass->remove_Discounts($jsonData);
         break;
 
-
+        
     // -------- -FM Room Types -------- //
     case "view_room_types":
         echo $AdminClass->view_AllRoomTypes();
@@ -496,4 +495,6 @@ switch ($methodType) {
     case "delete_room_types":
         echo $AdminClass->remove_RoomTypes($jsonData);
         break;
+
+
 }
