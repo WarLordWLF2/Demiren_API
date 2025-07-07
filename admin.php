@@ -46,6 +46,26 @@ class Admin_Functions
         return $rowCount > 0 ? json_encode($result) : 0;
     }
 
+    // Bookings
+    function view_bookings()
+    {
+        include 'connection.php';
+
+        $sql = "SELECT a.booking_id, a.customers_id, a.customers_walk_in_id, b.status_name, a.booking_downpayment,
+        a.booking_checkin_dateandtime, a.booking_checkout_dateandtime, a.booking_reference_number, a.booking_created_at, c.roomnumber_id
+        FROM tbl_booking a 
+        INNER JOIN tbl_status_types b ON a.booking_status_id = b.status_id
+        LEFT JOIN tbl_booking_room c ON c.booking_id = a.booking_id";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rowAmnt = $stmt->rowCount();
+        unset($conn, $stmt);
+
+        echo json_encode($rowAmnt > 0 ? $result : "Data Not Fetched");
+    }
+
     // ------------------------------------------------------- Master File Functions ------------------------------------------------------- //
     // ----- Amenity Master ----- //
     function view_Amenities()
@@ -400,6 +420,10 @@ switch ($methodType) {
         echo json_encode(["message" => "Successfully Retrieved Data"]);
         break;
 
+    case "view_bookings" :
+        echo $AdminClass->view_bookings();
+        break;
+
 
     // Room Management or Something?
     case "view_rooms":
@@ -478,7 +502,7 @@ switch ($methodType) {
         echo $AdminClass->remove_Discounts($jsonData);
         break;
 
-        
+
     // -------- -FM Room Types -------- //
     case "view_room_types":
         echo $AdminClass->view_AllRoomTypes();
@@ -495,6 +519,4 @@ switch ($methodType) {
     case "delete_room_types":
         echo $AdminClass->remove_RoomTypes($jsonData);
         break;
-
-
 }

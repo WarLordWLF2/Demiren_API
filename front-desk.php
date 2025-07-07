@@ -16,29 +16,14 @@ class FrontDesk_Functions
     {
         include 'connection.php';
 
-        $sql = "SELECT 
-                a.booking_id, 
-                b.customers_online_username AS username, 
-                CONCAT(c.customers_walk_in_fname, ' ', c.customers_walk_in_lname) AS walk_in, 
-                GROUP_CONCAT(DISTINCT f.roomtype_id) AS roomtype_ids,
-                GROUP_CONCAT(DISTINCT f.roomtype_name) AS roomtype_names,
-                GROUP_CONCAT(DISTINCT e.roomnumber_id) AS roomnumber_ids,
-                a.booking_status_id, 
-                d.booking_status_name, 
-                a.booking_downpayment, 
-                a.booking_checkin_dateandtime AS check_in, 
-                a.booking_checkout_dateandtime AS check_out, 
-                a.booking_created_at AS booking_req, 
-                a.booking_reference_number AS ref_num
+        $sql = "SELECT a.booking_id, CONCAT(d.customers_walk_in_fname, ' ', d.customers_walk_in_lname) AS fullname, 
+                e.customers_online_username, a.booking_downpayment, c.booking_status_name, a.booking_checkin_dateandtime, 
+                a.booking_checkout_dateandtime, a.booking_created_at FROM tbl_booking a 
 
-                FROM tbl_booking a
-                LEFT JOIN tbl_customers_online b ON a.customers_id = b.customers_online_id
-                LEFT JOIN tbl_customers_walk_in c ON a.customers_walk_in_id = c.customers_walk_in_id
-                INNER JOIN tbl_booking_status d ON a.booking_status_id = d.booking_status_id
-                INNER JOIN tbl_booking_room e ON e.booking_id = a.booking_id
-                INNER JOIN tbl_roomtype f ON e.roomtype_id = f.roomtype_id
-
-                GROUP BY a.booking_id";
+                LEFT JOIN tbl_customers_walk_in d ON a.customers_walk_in_id = d.customers_walk_in_id
+                LEFT JOIN tbl_customers_online e ON a.customers_id = e.customers_online_id
+                LEFT JOIN tbl_booking_history b ON a.booking_id = b.booking_id
+                LEFT JOIN tbl_booking_status c ON b.status_id = c.booking_status_id";
 
         $stmt = $conn->prepare($sql);
         $stmt->execute();
@@ -49,59 +34,41 @@ class FrontDesk_Functions
         return $rowCount > 0 ? json_encode($result) : 0;
     }
 
-    function add_WalkIn_booking($data)
+    // New Booking Method
+    // Inserts it inside the table, tbl_status_booking
+    // Should record the change of status
+    function recBooking_Status($data)
     {
         include 'connection.php';
 
         try {
-            $conn->beginTransaction();
-
-            $sql = "";
-            $stmt = $conn->prepare($sql);
-            $stmt->bindParam(":", $data);
-
-            $stmt = $conn->prepare($sql);
-            $stmt->execute();
-            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            if ($results) {
-                json_encode(["response" => true, "message" => "Successfully Added New Schedule"]);
-            }
-        } catch (PDOException $e) {
-        }
-    }
-
-    function update_bookingStatus($data)
-    {
-        // Has to change "Pending" to "Approved"
-        // Room that the user has chosen has to be "Occupied"
-        include 'connection.php';
-
-        try {
-            $booking_id = intval($data["booking_id"]);
+            // Reminder to accept Employee ID
+            // $emp_id = intval($data["emp_id"]);
+            $book_id = intval($data["booking_id"]);
             $status_id = intval($data["booking_status_id"]);
 
+            $stmt  = $conn->prepare(
+                "INSERT INTO tbl_booking_history (booking_id, employee_id, status_id,updated_at)
+                VALUES (:booking_id, 1, :status_id, NOW())");
 
-            $sql = "UPDATE tbl_booking SET booking_status_id = :status_id WHERE booking_id = :bookingID";
-
-            $stmt = $conn->prepare($sql);
+            $stmt->bindParam(":booking_id", $book_id);
+            // $stmt->bindParam(":employee_id", $emp_id);
             $stmt->bindParam(":status_id", $status_id);
-            $stmt->bindParam(":bookingID", $booking_id);
-            $success = $stmt->execute();
+            $stmt->execute();
 
-            echo json_encode(["success" => $success]);
+            $rowCount = $stmt->rowCount();
+            unset($stmt, $conn);
+
+            return $rowCount > 0 ? json_encode(["success" => true]) : json_encode(["success" => false]);
         } catch (PDOException $e) {
-            echo json_encode(["success" => false, "error" => $e->getMessage()]);
+            return json_encode(["success" => false, "error" => $e->getMessage()]);
         }
-
-        unset($stmt, $conn);
     }
 
     // Add Guests
-    function customerWalkIn($json)
+    function customerWalkIn($data)
     {
         include "connection.php";
-        $json = json_decode($json, true);
 
         try {
             $conn->beginTransaction();
@@ -113,10 +80,10 @@ class FrontDesk_Functions
                 VALUES 
                     (:customers_walk_in_fname, :customers_walk_in_lname, :customers_walk_in_email, :customers_walk_in_phone_number)
             ");
-            $stmt->bindParam(":customers_walk_in_fname", $json["customers_walk_in_fname"]);
-            $stmt->bindParam(":customers_walk_in_lname", $json["customers_walk_in_lname"]);
-            $stmt->bindParam(":customers_walk_in_email", $json["customers_walk_in_email"]);
-            $stmt->bindParam(":customers_walk_in_phone_number", $json["customers_walk_in_phone_number"]);
+            $stmt->bindParam(":customers_walk_in_fname", $data["customers_walk_in_fname"]);
+            $stmt->bindParam(":customers_walk_in_lname", $data["customers_walk_in_lname"]);
+            $stmt->bindParam(":customers_walk_in_email", $data["customers_walk_in_email"]);
+            $stmt->bindParam(":customers_walk_in_phone_number", $data["customers_walk_in_phone_number"]);
             $stmt->execute();
             $walkInCustomerId = $conn->lastInsertId();
 
@@ -128,15 +95,15 @@ class FrontDesk_Functions
                     (NULL, :customers_walk_in_id, 2, :booking_downpayment, :booking_checkin_dateandtime, :booking_checkout_dateandtime, NOW())
             ");
             $stmt->bindParam(":customers_walk_in_id", $walkInCustomerId);
-            $stmt->bindParam(":booking_downpayment", $json["booking_downpayment"]);
-            $stmt->bindParam(":booking_checkin_dateandtime", $json["booking_checkin_dateandtime"]);
-            $stmt->bindParam(":booking_checkout_dateandtime", $json["booking_checkout_dateandtime"]);
+            $stmt->bindParam(":booking_downpayment", $data["booking_downpayment"]);
+            $stmt->bindParam(":booking_checkin_dateandtime", $data["booking_checkin_dateandtime"]);
+            $stmt->bindParam(":booking_checkout_dateandtime", $data["booking_checkout_dateandtime"]);
             $stmt->execute();
             $bookingId = $conn->lastInsertId();
 
             // Insert into tbl_booking_room based on room quantity
-            $roomtype_id = $json["roomtype_id"];
-            $room_count = intval($json["room_count"]);
+            $roomtype_id = $data["roomtype_id"];
+            $room_count = intval($data["room_count"]);
 
             for ($i = 0; $i < $room_count; $i++) {
                 $stmt = $conn->prepare("
@@ -216,8 +183,8 @@ switch ($method) {
     case 'view-reservations':
         echo $demiren_FrontDesk->view_booking();
         break;
-    case 'update-booking-status':
-        echo $demiren_FrontDesk->update_bookingStatus($json);
+    case 'record-booking-status':
+        echo $demiren_FrontDesk->recBooking_Status($json);
         break;
 
     // Guests

@@ -255,6 +255,7 @@ class Demiren_customer
         return $stmt->rowCount() > 0 ? 1 : 0;
     }
 
+    // New Method
     function customerBookingNoAccount($json)
     {
         include "connection.php";
@@ -280,9 +281,9 @@ class Demiren_customer
             // Insert booking
             $stmt = $conn->prepare("
                 INSERT INTO tbl_booking 
-                    (customers_id, customers_walk_in_id, booking_status_id, booking_downpayment, booking_checkin_dateandtime, booking_checkout_dateandtime, booking_created_at) 
+                    (customers_id, customers_walk_in_id, booking_downpayment, booking_checkin_dateandtime, booking_checkout_dateandtime, booking_created_at) 
                 VALUES 
-                    (NULL, :customers_walk_in_id, 2, :booking_downpayment, :booking_checkin_dateandtime, :booking_checkout_dateandtime, NOW())
+                    (NULL, :customers_walk_in_id, :booking_downpayment, :booking_checkin_dateandtime, :booking_checkout_dateandtime, NOW())
             ");
             $stmt->bindParam(":customers_walk_in_id", $walkInCustomerId);
             $stmt->bindParam(":booking_downpayment", $json["booking_downpayment"]);
@@ -314,6 +315,67 @@ class Demiren_customer
             return 0;
         }
     }
+
+    // Old Method
+    // function customerBookingNoAccount($json)
+    // {
+    //     include "connection.php";
+    //     $json = json_decode($json, true);
+
+    //     try {
+    //         $conn->beginTransaction();
+
+    //         // Insert walk-in customer
+    //         $stmt = $conn->prepare("
+    //             INSERT INTO tbl_customers_walk_in 
+    //                 (customers_walk_in_fname, customers_walk_in_lname, customers_walk_in_email, customers_walk_in_phone_number) 
+    //             VALUES 
+    //                 (:customers_walk_in_fname, :customers_walk_in_lname, :customers_walk_in_email, :customers_walk_in_phone_number)
+    //         ");
+    //         $stmt->bindParam(":customers_walk_in_fname", $json["customers_walk_in_fname"]);
+    //         $stmt->bindParam(":customers_walk_in_lname", $json["customers_walk_in_lname"]);
+    //         $stmt->bindParam(":customers_walk_in_email", $json["customers_walk_in_email"]);
+    //         $stmt->bindParam(":customers_walk_in_phone_number", $json["customers_walk_in_phone_number"]);
+    //         $stmt->execute();
+    //         $walkInCustomerId = $conn->lastInsertId();
+
+    //         // Insert booking
+    //         $stmt = $conn->prepare("
+    //             INSERT INTO tbl_booking 
+    //                 (customers_id, customers_walk_in_id, booking_status_id, booking_downpayment, booking_checkin_dateandtime, booking_checkout_dateandtime, booking_created_at) 
+    //             VALUES 
+    //                 (NULL, :customers_walk_in_id, 2, :booking_downpayment, :booking_checkin_dateandtime, :booking_checkout_dateandtime, NOW())
+    //         ");
+    //         $stmt->bindParam(":customers_walk_in_id", $walkInCustomerId);
+    //         $stmt->bindParam(":booking_downpayment", $json["booking_downpayment"]);
+    //         $stmt->bindParam(":booking_checkin_dateandtime", $json["booking_checkin_dateandtime"]);
+    //         $stmt->bindParam(":booking_checkout_dateandtime", $json["booking_checkout_dateandtime"]);
+    //         $stmt->execute();
+    //         $bookingId = $conn->lastInsertId();
+
+    //         // Insert into tbl_booking_room based on room quantity
+    //         $roomtype_id = $json["roomtype_id"];
+    //         $room_count = intval($json["room_count"]);
+
+    //         for ($i = 0; $i < $room_count; $i++) {
+    //             $stmt = $conn->prepare("
+    //                 INSERT INTO tbl_booking_room 
+    //                     (booking_id, roomtype_id, roomnumber_id) 
+    //                 VALUES 
+    //                     (:booking_id, :roomtype_id, NULL)
+    //             ");
+    //             $stmt->bindParam(":booking_id", $bookingId);
+    //             $stmt->bindParam(":roomtype_id", $roomtype_id);
+    //             $stmt->execute();
+    //         }
+
+    //         $conn->commit();
+    //         return 1;
+    //     } catch (PDOException $e) {
+    //         $conn->rollBack();
+    //         return 0;
+    //     }
+    // }
 
     function customerViewBookings($json)
     {
@@ -817,7 +879,7 @@ switch ($operation) {
     case "customerCurrentBookingsWithoutAccount":
         echo $demiren_customer->customerCurrentBookingsWithoutAccount($json);
         break;
-    case "customerBookingWithAccount": 
+    case "customerBookingWithAccount":
         echo $demiren_customer->customerBookingWithAccount($json);
         break;
     default:
